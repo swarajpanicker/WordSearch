@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Letter Hunt – Word Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e8eff1;--grid:#cddadf;--ink:#10303b;--soft:#4d6b75;--card:#f8fbfc;--line:#b9cbd1;--acc:#2f4bff;--accink:#fff;--sel:#2f4bff33;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a20;--grid:#1a2b33;--ink:#e6f1f4;--soft:#8fb0bb;--card:#14252d;--line:#2b434d;--acc:#7b8dff;--accink:#0e1a20;--sel:#7b8dff44;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1a20;--grid:#1a2b33;--ink:#e6f1f4;--soft:#8fb0bb;--card:#14252d;--line:#2b434d;--acc:#7b8dff;--accink:#0e1a20;--sel:#7b8dff44;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);background-color:var(--bg);
+background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px}
+main{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:clamp(2rem,6vw,3.4rem);font-weight:800;letter-spacing:-.03em;margin:8px 0 4px;line-height:1}
+.sub{color:var(--soft);margin:0 0 22px;max-width:46ch}
+h2{font-size:1rem;font-weight:600;margin:22px 0 10px}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cat{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px;text-align:left;font:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.cat b{font-size:1.5rem}.cat span{font-weight:600}.cat small{color:var(--soft)}
+.cat:hover{border-color:var(--soft)}
+.cat[aria-pressed=true]{border-color:var(--acc);box-shadow:0 0 0 3px var(--sel)}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.seg button{font:inherit;color:inherit;background:none;border:0;padding:9px 16px;cursor:pointer;font-weight:600}
+.seg button[aria-pressed=true]{background:var(--acc);color:var(--accink)}
+.btn{font:inherit;font-weight:600;border:2px solid var(--ink);color:var(--ink);background:var(--card);border-radius:12px;padding:9px 16px;cursor:pointer}
+.btn.p{background:var(--acc);border-color:var(--acc);color:var(--accink)}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.go{margin-top:26px;font-size:1.1rem;padding:12px 28px}
+#game{display:none}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 14px}
+.bar .t{font-weight:800;font-size:1.3rem;margin-right:auto}
+.bar .st{color:var(--soft);font-variant-numeric:tabular-nums}
+.play{display:grid;grid-template-columns:minmax(0,560px) 1fr;gap:22px;align-items:start}
+@media (max-width:760px){.play{grid-template-columns:1fr}}
+#board{container-type:inline-size;width:100%;display:grid;gap:2px;background:var(--card);padding:6px;border:2px solid var(--ink);border-radius:16px;touch-action:none;user-select:none;-webkit-user-select:none;grid-template-columns:repeat(var(--n),1fr)}
+.c{aspect-ratio:1;display:grid;place-items:center;font-weight:800;font-size:calc(52cqw / var(--n));border-radius:7px;cursor:pointer;transition:background .1s}
+.c.s{background:var(--sel);outline:2px solid var(--acc)}
+.c.f{background:hsl(var(--h) 85% 72%);color:#10303b}
+.c.h{animation:pulse .5s 3}
+@keyframes pulse{50%{background:var(--acc);color:var(--accink)}}
+@media (prefers-reduced-motion:reduce){.c.h{animation:none;background:var(--acc);color:var(--accink)}}
+#list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+#list li{background:var(--card);border:2px solid var(--line);border-radius:10px;padding:6px 12px;font-weight:600;letter-spacing:.04em}
+#list li.d{border-color:transparent;background:hsl(var(--h) 85% 72%);color:#10303b;text-decoration:line-through}
+.pane{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px}
+.pane p{margin:0 0 10px;color:var(--soft)}
+#win{position:fixed;inset:0;background:#0008;display:none;place-items:center;padding:20px}
+#win.on{display:grid}
+#win div{background:var(--card);border-radius:18px;padding:26px;max-width:360px;text-align:center}
+#win h2{font-size:1.8rem;margin:0 0 6px}
+#win p{margin:0 0 18px;color:var(--soft)}
+#win .btn{margin:4px}
+</style>
+</head>
+<body>
+<main>
+<section id="setup">
+  <h1>Letter Hunt</h1>
+  <p class="sub">Pick a theme, then drag across the grid to circle every hidden word. Words run in any direction the level allows.</p>
+  <h2>Theme</h2>
+  <div class="cats" id="cats"></div>
+  <h2>Level</h2>
+  <div class="seg" id="lv">
+    <button data-l="0" aria-pressed="false">Easy</button>
+    <button data-l="1" aria-pressed="true">Medium</button>
+    <button data-l="2" aria-pressed="false">Hard</button>
+  </div>
+  <p class="sub" id="lvnote" style="margin-top:8px"></p>
+  <button class="btn p go" id="start">Start hunting</button>
+</section>
+
+<section id="game">
+  <div class="bar">
+    <span class="t" id="gt"></span>
+    <span class="st" id="gs"></span>
+    <button class="btn" id="hint">Hint</button>
+    <button class="btn" id="again">New puzzle</button>
+    <button class="btn" id="menu">Themes</button>
+  </div>
+  <div class="play">
+    <div id="board" aria-label="Letter grid"></div>
+    <div class="pane"><p>Find these words:</p><ul id="list"></ul></div>
+  </div>
+</section>
+</main>
+<div id="win" role="dialog" aria-modal="true"><div>
+  <h2>All found!</h2><p id="wp"></p>
+  <button class="btn p" id="wa">Play again</button><button class="btn" id="wm">Change theme</button>
+</div></div>
+
+<script>
+const CATS={
+ nations:{i:'🌍',n:'Nations',w:'INDIA BRAZIL EGYPT JAPAN KENYA PERU NORWAY CANADA CHILE GHANA NEPAL ITALY FRANCE SPAIN MEXICO FINLAND'},
+ cities:{i:'🏙️',n:'Cities',w:'CHENNAI PARIS TOKYO CAIRO LISBON DELHI LONDON SYDNEY MUMBAI ROME DUBAI OSLO LIMA KYOTO NAIROBI'},
+ books:{i:'📚',n:'Books',w:'DUNE EMMA ULYSSES DRACULA MATILDA WALDEN HEIDI ILIAD RAMAYANA GITANJALI LOLITA CARRIE PERSUASION'},
+ science:{i:'🔬',n:'Science',w:'ATOM QUARK ENZYME PLASMA GRAVITY NEURON PROTON OSMOSIS FOSSIL PRISM ENTROPY GENOME MAGNET ISOTOPE'},
+ literature:{i:'✒️',n:'Literature',w:'SONNET HAIKU EPIC IRONY METAPHOR SIMILE STANZA PROSE FABLE ALLEGORY ODE ELEGY TRAGEDY VERSE'},
+ space:{i:'🪐',n:'Space',w:'COMET NEBULA ORBIT GALAXY PULSAR LUNAR SATURN METEOR QUASAR ECLIPSE COSMOS VENUS APOLLO'},
+ food:{i:'🍜',n:'Food',w:'MANGO DOSA SUSHI TACO PASTA BIRYANI PIZZA FALAFEL RAMEN PAELLA IDLI CURRY WAFFLE'},
+ animals:{i:'🦊',n:'Animals',w:'TIGER ZEBRA OTTER PANDA LEMUR FALCON KOALA GIRAFFE DOLPHIN PENGUIN JAGUAR MEERKAT BISON'},
+ music:{i:'🎻',n:'Instruments',w:'SITAR VIOLIN FLUTE TABLA PIANO CELLO DRUMS BANJO HARP OBOE VEENA GUITAR TRUMPET'},
+ myth:{i:'⚡',n:'Mythology',w:'ZEUS ODIN THOR ATHENA ANUBIS PHOENIX KRAKEN TITAN HYDRA LOKI MEDUSA ARES DRAGON GENIE'}
+};
+const LV=[{s:10,n:6,d:[[0,1],[1,0]],t:'10×10 grid, 6 words, reading right or down'},
+{s:12,n:8,d:[[0,1],[1,0],[1,1],[-1,1]],t:'12×12 grid, 8 words, including diagonals'},
+{s:14,n:10,d:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]],t:'14×14 grid, 10 words, every direction, even backwards'}];
+const $=s=>document.querySelector(s);
+let cat='nations',lv=1,G=null,timer=null,sel=null;
+
+function mem(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+
+// setup UI
+const catsEl=$('#cats');
+for(const k in CATS){const b=document.createElement('button');b.className='cat';b.dataset.k=k;
+ b.innerHTML=`<b>${CATS[k].i}</b><span>${CATS[k].n}</span><small>${CATS[k].w.split(' ').length} words</small>`;
+ b.onclick=()=>{cat=k;paint()};catsEl.appendChild(b)}
+document.querySelectorAll('#lv button').forEach(b=>b.onclick=()=>{lv=+b.dataset.l;paint()});
+function paint(){
+ document.querySelectorAll('.cat').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===cat));
+ document.querySelectorAll('#lv button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.l===lv));
+ $('#lvnote').textContent=LV[lv].t;
+}
+paint();
+
+function build(){
+ const L=LV[lv],S=L.s;
+ const words=shuffle(CATS[cat].w.split(' ').filter(w=>w.length<=S)).slice(0,L.n).sort((a,b)=>b.length-a.length);
+ const g=Array(S*S).fill('');const placed=[];
+ for(const w of words){
+  for(let t=0;t<400;t++){
+   const [dr,dc]=L.d[Math.random()*L.d.length|0];
+   const r=Math.random()*S|0,c=Math.random()*S|0;
+   const er=r+dr*(w.length-1),ec=c+dc*(w.length-1);
+   if(er<0||er>=S||ec<0||ec>=S)continue;
+   let ok=true;const idx=[];
+   for(let i=0;i<w.length;i++){const k=(r+dr*i)*S+c+dc*i;if(g[k]&&g[k]!==w[i]){ok=false;break}idx.push(k)}
+   if(!ok)continue;
+   idx.forEach((k,i)=>g[k]=w[i]);placed.push({w,idx,done:false});break;
+  }
+ }
+ const A='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+ for(let i=0;i<g.length;i++)if(!g[i])g[i]=A[Math.random()*26|0];
+ return {S,g,words:placed,found:0,sec:0};
+}
+
+function start(){
+ G=build();clearInterval(timer);
+ $('#setup').style.display='none';$('#game').style.display='block';$('#win').classList.remove('on');
+ $('#gt').textContent=CATS[cat].i+' '+CATS[cat].n;
+ const b=$('#board');b.style.setProperty('--n',G.S);b.innerHTML='';
+ G.g.forEach((ch,i)=>{const d=document.createElement('div');d.className='c';d.dataset.i=i;d.textContent=ch;b.appendChild(d)});
+ const ul=$('#list');ul.innerHTML='';
+ G.words.forEach((o,i)=>{const li=document.createElement('li');li.id='w'+i;li.textContent=o.w;ul.appendChild(li)});
+ stat();timer=setInterval(()=>{G.sec++;stat()},1000);
+}
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+function stat(){$('#gs').textContent=`${G.found}/${G.words.length} found · ${fmt(G.sec)}`}
+
+// selection
+const cells=()=>$('#board').children;
+function path(a,b){
+ const S=G.S,r1=a/S|0,c1=a%S,r2=b/S|0,c2=b%S,dr=r2-r1,dc=c2-c1;
+ if(!(dr===0||dc===0||Math.abs(dr)===Math.abs(dc)))return [a];
+ const n=Math.max(Math.abs(dr),Math.abs(dc)),sr=Math.sign(dr),sc=Math.sign(dc),p=[];
+ for(let i=0;i<=n;i++)p.push((r1+sr*i)*S+c1+sc*i);return p;
+}
+function cellAt(e){const el=document.elementFromPoint(e.clientX,e.clientY);return el&&el.classList.contains('c')?+el.dataset.i:null}
+function show(p){[...cells()].forEach(c=>c.classList.remove('s'));p.forEach(i=>cells()[i].classList.add('s'))}
+const B=$('#board');
+B.addEventListener('pointerdown',e=>{const i=cellAt(e);if(i===null)return;B.setPointerCapture(e.pointerId);sel={a:i,p:[i]};show(sel.p)});
+B.addEventListener('pointermove',e=>{if(!sel)return;const i=cellAt(e);if(i===null)return;sel.p=path(sel.a,i);show(sel.p)});
+B.addEventListener('pointerup',()=>{if(!sel)return;check(sel.p);sel=null;show([])});
+B.addEventListener('pointercancel',()=>{sel=null;show([])});
+
+function check(p){
+ if(p.length<2)return;
+ const s=p.map(i=>G.g[i]).join(''),r=[...s].reverse().join('');
+ const k=G.words.findIndex(o=>!o.done&&(o.w===s||o.w===r));
+ if(k<0)return;
+ const o=G.words[k];o.done=true;G.found++;
+ const h=(k*47+190)%360;
+ p.forEach(i=>{const c=cells()[i];c.classList.add('f');c.style.setProperty('--h',h)});
+ const li=$('#w'+k);li.classList.add('d');li.style.setProperty('--h',h);
+ stat();
+ if(G.found===G.words.length)win();
+}
+function win(){
+ clearInterval(timer);
+ const key='lh-'+cat+'-'+lv,best=+mem(key);
+ let msg=`Solved in ${fmt(G.sec)}.`;
+ if(!best||G.sec<best){mem(key,G.sec);msg+=best?' New best time!':' First clear on this level.'}else msg+=` Best: ${fmt(best)}.`;
+ $('#wp').textContent=msg;$('#win').classList.add('on');
+}
+$('#hint').onclick=()=>{
+ const left=G.words.filter(o=>!o.done);if(!left.length)return;
+ const c=cells()[left[Math.random()*left.length|0].idx[0]];
+ c.classList.add('h');setTimeout(()=>c.classList.remove('h'),1600);
+};
+$('#start').onclick=start;$('#again').onclick=start;$('#wa').onclick=start;
+function menu(){clearInterval(timer);$('#win').classList.remove('on');$('#game').style.display='none';$('#setup').style.display='block'}
+$('#menu').onclick=menu;$('#wm').onclick=menu;
+</script>
+</body>
+</html>
